@@ -1,0 +1,13 @@
+.video-caption {
+  position: absolute;
+  width: max-content;
+  box-sizing: border-box;
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: 0;
+  text-align: center;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  z-index: 2;
+}

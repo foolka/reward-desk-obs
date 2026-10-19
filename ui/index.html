@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://127.0.0.1:*; media-src 'self' http://127.0.0.1:*; connect-src 'none'; object-src 'none'"
+    />
+    <title>Reward Desk</title>
+    <script src="i18n.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="../overlay/caption.css" />
+  </head>
+  <body>
+    <div class="window-titlebar">
+      <span class="window-title"
+        ><i data-lucide="clapperboard"></i>Reward Desk</span
+      >
+      <div class="window-controls">
+        <button
+          id="window-tray"
+          title="Свернуть в трей"
+          data-i18n-title="Свернуть в трей"
+          aria-label="Свернуть в трей"
+          data-i18n-aria-label="Свернуть в трей"
+        >
+          <i data-lucide="panel-bottom-close"></i>
+        </button>
+        <button id="window-minimize" title="Свернуть" data-i18n-title="Свернуть" aria-label="Свернуть" data-i18n-aria-label="Свернуть">
+          <i data-lucide="minus"></i>
+        </button>
+        <button
+          id="window-maximize"
+          title="Развернуть или восстановить"
+          data-i18n-title="Развернуть или восстановить"
+          aria-label="Развернуть или восстановить"
+          data-i18n-aria-label="Развернуть или восстановить"
+        >
+          <i data-lucide="square"></i>
+        </button>
+        <button
+          id="window-quit"
+          title="Выход из Reward Desk"
+          data-i18n-title="Выход из Reward Desk"
+          aria-label="Выход из Reward Desk"
+          data-i18n-aria-label="Выход из Reward Desk"
+        >
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+    </div>
+    <header class="app-header">
+      <div class="brand">
+        <i data-lucide="clapperboard"></i>
+        <h1>Reward Desk</h1>
+        <span class="version"></span>
+      </div>
+      <div class="header-tools">
+        <div class="appearance-controls">
+          <button id="theme-toggle" title="Включить тёмную тему" aria-label="Включить тёмную тему" aria-pressed="false">
+            <i data-lucide="moon"></i>
+          </button>
+          <select id="language" aria-label="Язык интерфейса" data-i18n-aria-label="Язык интерфейса">
+            <option value="ru">Русский</option>
+            <option value="uk">Українська</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+        <div class="connection">
+          <span id="connection-dot" class="dot"></span
+          ><span id="connection-text" data-i18n="Twitch не подключён">Twitch не подключён</span>
+        </div>
+      </div>
+    </header>
+    <nav class="top-nav">
+      <button data-tab="rewards" class="active">
+        <i data-lucide="gift"></i><span data-i18n="Награды">Награды</span></button
+      ><button data-tab="channel">
+        <i data-lucide="twitch"></i><span data-i18n="Награды канала">Награды канала</span></button
+      ><button data-tab="queue">
+        <i data-lucide="list-video"></i><span data-i18n="Очередь">Очередь</span>
+        <span id="queue-count">0</span></button
+      ><button data-tab="settings">
+        <i data-lucide="settings-2"></i><span data-i18n="Подключение">Подключение</span>
+      </button>
+      <div class="nav-spacer"></div>
+      <button id="pause" title="Пауза очереди" data-i18n-title="Пауза очереди">
+        <i data-lucide="pause"></i></button
+      ><button id="stop" title="Остановить текущую награду" data-i18n-title="Остановить текущую награду">
+        <i data-lucide="square"></i>
+      </button>
+    </nav>
+    <div id="source-health" class="source-health" role="status"></div>
+    <main>
+      <section id="tab-rewards" class="workspace">
+        <aside>
+          <div class="aside-head">
+            <h2 data-i18n="Мои награды">Мои награды</h2>
+            <span id="reward-count">0</span>
+          </div>
+          <div class="reward-kinds" role="tablist" aria-label="Тип наград" data-i18n-aria-label="Тип наград">
+            <button
+              id="kind-audio"
+              data-kind-tab="audio"
+              role="tab"
+              aria-selected="true"
+              class="active"
+            >
+              <i data-lucide="audio-lines"></i><span data-i18n="Звук">Звук</span>
+            </button>
+            <button
+              id="kind-video"
+              data-kind-tab="video"
+              role="tab"
+              aria-selected="false"
+            >
+              <i data-lucide="film"></i><span data-i18n="Видео">Видео</span>
+            </button>
+          </div>
+          <div class="create-row">
+            <button id="new-reward">
+              <i data-lucide="plus"></i><span data-i18n="Новая награда">Новая награда</span>
+            </button>
+            <button
+              id="manage-groups"
+              title="Группы наград"
+              data-i18n-title="Группы наград"
+              aria-label="Группы наград"
+              data-i18n-aria-label="Группы наград"
+            >
+              <i data-lucide="folders"></i>
+            </button>
+          </div>
+          <input
+            id="search"
+            type="search"
+            placeholder="Поиск награды"
+            data-i18n-placeholder="Поиск награды"
+            aria-label="Поиск награды"
+            data-i18n-aria-label="Поиск награды"
+          />
+          <div id="reward-list"></div>
+        </aside>
+        <div id="editor">
+          <div class="empty">
+            <i data-lucide="gift"></i>
+            <h2 data-i18n="Нет выбранной награды">Нет выбранной награды</h2>
+            <button id="first-create" class="primary">
+              <i data-lucide="plus"></i><span data-i18n="Создать награду">Создать награду</span>
+            </button>
+          </div>
+        </div>
+      </section>
+      <section id="tab-channel" hidden>
+        <div class="section-head">
+          <div>
+            <h2 data-i18n="Награды канала">Награды канала</h2>
+            <div id="channel-updated" class="muted"></div>
+          </div>
+          <div class="button-row">
+            <button id="channel-dashboard">
+              <i data-lucide="external-link"></i><span data-i18n="Панель Twitch">Панель Twitch</span></button
+            ><button id="channel-refresh" title="Обновить награды" data-i18n-title="Обновить награды">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+          </div>
+        </div>
+        <div id="channel-error" class="notice" role="status" hidden></div>
+        <div class="channel-layout">
+          <div class="channel-browser">
+            <div class="channel-filters">
+              <input
+                id="channel-search"
+                type="search"
+                placeholder="Поиск награды"
+                data-i18n-placeholder="Поиск награды"
+                aria-label="Поиск награды канала"
+                data-i18n-aria-label="Поиск награды канала"
+              />
+              <select id="channel-filter" aria-label="Доступ к наградам" data-i18n-aria-label="Доступ к наградам">
+                <option value="all" data-i18n="Все награды">Все награды</option>
+                <option value="editable" data-i18n="Можно изменить">Можно изменить</option>
+                <option value="readonly" data-i18n="Только просмотр">Только просмотр</option>
+              </select>
+            </div>
+            <div id="channel-filter-summary" class="filter-summary" hidden>
+              <span id="channel-filter-count" role="status"></span>
+              <button
+                id="channel-clear-filters"
+                title="Сбросить все фильтры"
+                data-i18n-title="Сбросить все фильтры"
+                aria-label="Сбросить все фильтры"
+                data-i18n-aria-label="Сбросить все фильтры"
+              >
+                <i data-lucide="filter-x"></i>
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table class="channel-table">
+                <thead>
+                  <tr>
+                    <th scope="col" data-column="color" aria-sort="none">
+                      <div class="column-heading">
+                        <button
+                          data-channel-sort="color"
+                          title="Сортировать по цвету"
+                          data-i18n-title="Сортировать по цвету"
+                        >
+                          <span data-i18n="Цвет">Цвет</span><i data-lucide="arrow-up-down"></i></button
+                        ><button
+                          data-channel-menu="color"
+                          popovertarget="channel-color-popover"
+                          title="Фильтр по цвету"
+                          data-i18n-title="Фильтр по цвету"
+                          aria-label="Фильтр по цвету"
+                          data-i18n-aria-label="Фильтр по цвету"
+                        >
+                          <i data-lucide="list-filter"></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th scope="col" data-column="title" aria-sort="none">
+                      <div class="column-heading">
+                        <button
+                          data-channel-sort="title"
+                          title="Сортировать по названию"
+                          data-i18n-title="Сортировать по названию"
+                        >
+                          <span data-i18n="Награда">Награда</span><i data-lucide="arrow-up-down"></i></button
+                        ><button
+                          data-channel-menu="title"
+                          popovertarget="channel-title-popover"
+                          title="Фильтр по награде"
+                          data-i18n-title="Фильтр по награде"
+                          aria-label="Фильтр по награде"
+                          data-i18n-aria-label="Фильтр по награде"
+                        >
+                          <i data-lucide="list-filter"></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th scope="col" data-column="cost" aria-sort="none">
+                      <div class="column-heading">
+                        <button
+                          data-channel-sort="cost"
+                          title="Сортировать по баллам"
+                          data-i18n-title="Сортировать по баллам"
+                        >
+                          <span data-i18n="Баллы">Баллы</span><i data-lucide="arrow-up-down"></i></button
+                        ><button
+                          data-channel-menu="cost"
+                          popovertarget="channel-cost-popover"
+                          title="Фильтр по баллам"
+                          data-i18n-title="Фильтр по баллам"
+                          aria-label="Фильтр по баллам"
+                          data-i18n-aria-label="Фильтр по баллам"
+                        >
+                          <i data-lucide="list-filter"></i>
+                        </button>
+                      </div>
+                    </th>
+                    <th scope="col" aria-label="Действия" data-i18n-aria-label="Действия"></th>
+                  </tr>
+                </thead>
+                <tbody id="channel-list"></tbody>
+              </table>
+            </div>
+            <div id="channel-empty" class="empty"></div>
+          </div>
+          <div id="channel-editor">
+            <div class="empty" data-i18n="Выберите награду">Выберите награду</div>
+          </div>
+        </div>
+        <div
+          id="channel-color-popover"
+          class="column-popover"
+          popover="auto"
+          aria-label="Фильтр по цвету"
+          data-i18n-aria-label="Фильтр по цвету"
+        >
+          <div class="popover-head">
+            <strong data-i18n="Цвет">Цвет</strong
+            ><button
+              data-clear-column="color"
+              title="Сбросить цвет"
+              data-i18n-title="Сбросить цвет"
+              aria-label="Сбросить цвет"
+              data-i18n-aria-label="Сбросить цвет"
+            >
+              <i data-lucide="filter-x"></i>
+            </button>
+          </div>
+          <div id="channel-colors" class="filter-colors"></div>
+        </div>
+        <div
+          id="channel-title-popover"
+          class="column-popover"
+          popover="auto"
+          aria-label="Фильтр по награде"
+          data-i18n-aria-label="Фильтр по награде"
+        >
+          <div class="popover-head">
+            <strong data-i18n="Награда">Награда</strong
+            ><button
+              data-clear-column="title"
+              title="Сбросить название и состояние"
+              data-i18n-title="Сбросить название и состояние"
+              aria-label="Сбросить название и состояние"
+              data-i18n-aria-label="Сбросить название и состояние"
+            >
+              <i data-lucide="filter-x"></i>
+            </button>
+          </div>
+          <label
+            ><span data-i18n="Название">Название</span><input id="channel-name" type="search" autocomplete="off"
+          /></label>
+          <label
+            ><span data-i18n="Состояние">Состояние</span><select id="channel-status">
+              <option value="all" data-i18n="Любое состояние">Любое состояние</option>
+              <option value="active" data-i18n="Активна">Активна</option>
+              <option value="paused" data-i18n="На паузе">На паузе</option>
+              <option value="disabled" data-i18n="Отключена">Отключена</option>
+              <option value="unavailable" data-i18n="Недоступна сейчас">Недоступна сейчас</option>
+            </select></label
+          >
+        </div>
+        <div
+          id="channel-cost-popover"
+          class="column-popover"
+          popover="auto"
+          aria-label="Фильтр по баллам"
+          data-i18n-aria-label="Фильтр по баллам"
+        >
+          <div class="popover-head">
+            <strong data-i18n="Баллы">Баллы</strong
+            ><button
+              data-clear-column="cost"
+              title="Сбросить диапазон баллов"
+              data-i18n-title="Сбросить диапазон баллов"
+              aria-label="Сбросить диапазон баллов"
+              data-i18n-aria-label="Сбросить диапазон баллов"
+            >
+              <i data-lucide="filter-x"></i>
+            </button>
+          </div>
+          <div class="filter-range">
+            <label
+              ><span data-i18n="От">От</span><input
+                id="channel-cost-min"
+                type="number"
+                min="1"
+                max="1000000000"
+                step="1"
+                placeholder="Любые" data-i18n-placeholder="Любые" /></label
+            ><label
+              ><span data-i18n="До">До</span><input
+                id="channel-cost-max"
+                type="number"
+                min="1"
+                max="1000000000"
+                step="1"
+                placeholder="Любые"
+                data-i18n-placeholder="Любые"
+            /></label>
+          </div>
+          <div
+            id="channel-range-error"
+            class="filter-error"
+            data-i18n="Укажите целые баллы от 1 до 1 000 000 000. Нижняя граница не должна превышать верхнюю."
+            role="status"
+            hidden
+          >
+            Укажите целые баллы от 1 до 1 000 000 000. Нижняя граница не должна
+            превышать верхнюю.
+          </div>
+        </div>
+      </section>
+      <section id="tab-queue" hidden>
+        <div class="section-head">
+          <h2 data-i18n="Очередь и история">Очередь и история</h2>
+          <span id="queue-status"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="Время">Время</th>
+                <th data-i18n="Зритель / награда">Зритель / награда</th>
+                <th data-i18n="Файл">Файл</th>
+                <th data-i18n="Статус">Статус</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="jobs"></tbody>
+          </table>
+        </div>
+      </section>
+      <section id="tab-settings" hidden>
+        <div class="settings-grid">
+          <div>
+            <h2>Twitch</h2>
+            <div id="auth-state"></div>
+            <div id="chat-connection-state" class="field-note"></div>
+            <label
+              ><span>Client ID</span><input
+                id="client-id"
+                autocomplete="off"
+                spellcheck="false"
+            /></label>
+            <div class="button-row">
+              <button id="login" class="primary">
+                <i data-lucide="log-in"></i><span data-i18n="Войти через Twitch">Войти через Twitch</span></button
+              ><button id="logout"><i data-lucide="log-out"></i><span data-i18n="Выйти">Выйти</span></button
+              ><button id="reconnect" title="Переподключить Twitch" data-i18n-title="Переподключить Twitch">
+                <i data-lucide="refresh-cw"></i>
+              </button>
+            </div>
+            <div id="login-pending" hidden>
+              <strong id="login-code"></strong
+              ><button id="copy-code" title="Скопировать код" data-i18n-title="Скопировать код">
+                <i data-lucide="copy"></i></button
+              ><button id="cancel-login" data-i18n="Отмена">Отмена</button>
+            </div>
+          </div>
+          <div>
+            <h2 data-i18n="Источник OBS">Источник OBS</h2>
+            <label
+              ><span>URL</span>
+              <div class="input-action">
+                <input id="overlay-url" readonly /><button
+                  id="copy-url"
+                  title="Скопировать URL"
+                  data-i18n-title="Скопировать URL"
+                >
+                  <i data-lucide="copy"></i>
+                </button></div
+            ></label>
+            <div class="source-meta">
+              <span>1920 × 1080</span><span id="obs-status"></span>
+            </div>
+            <div id="overlay-error" class="notice" hidden></div>
+            <div class="port-row">
+              <label
+                ><span data-i18n="Порт">Порт</span><input
+                  id="port"
+                  type="number"
+                  min="1024"
+                  max="65535" /></label
+              ><button id="save-port" title="Сохранить порт" data-i18n-title="Сохранить порт">
+                <i data-lucide="save"></i></button
+              ><button id="preview">
+                <i data-lucide="monitor-play"></i><span data-i18n="Предпросмотр">Предпросмотр</span>
+              </button>
+            </div>
+            <section class="editor-section obs-recovery">
+              <div class="section-head">
+                <h3 data-i18n="Защита источника OBS">Защита источника OBS</h3>
+                <button
+                  class="option-help"
+                  data-help="obsRecovery"
+                  aria-label="Об автовосстановлении OBS"
+                  data-i18n-aria-label="Об автовосстановлении OBS"
+                >
+                  <i data-lucide="circle-help"></i>
+                </button>
+              </div>
+              <div
+                id="obs-recovery-status"
+                class="field-note"
+                role="status"
+              ></div>
+              <label class="check"
+                ><input id="obs-auto" type="checkbox" /><span data-i18n="Автоматически обновлять потерянный источник">Автоматически обновлять потерянный источник</span></label
+              >
+              <button id="obs-local">
+                <i data-lucide="shield-check"></i><span data-i18n="Настроить защиту OBS">Настроить защиту OBS</span>
+              </button>
+              <details>
+                <summary data-i18n="Дополнительные настройки подключения">Дополнительные настройки подключения</summary>
+                <div class="obs-fields">
+                  <label
+                    ><span data-i18n="Порт OBS">Порт OBS</span><input
+                      id="obs-ws-port"
+                      type="number"
+                      min="1024"
+                      max="65535"
+                      value="4455" /></label
+                  ><label
+                    ><span data-i18n="Пароль">Пароль</span><input
+                      id="obs-ws-password"
+                      type="password"
+                      autocomplete="new-password" /></label
+                  ><button
+                    id="obs-connect"
+                    title="Подключить OBS"
+                    data-i18n-title="Подключить OBS"
+                    aria-label="Подключить OBS"
+                    data-i18n-aria-label="Подключить OBS"
+                  >
+                    <i data-lucide="plug"></i>
+                  </button>
+                </div>
+              </details>
+            </section>
+          </div>
+        </div>
+        <div class="section-head">
+          <h2 data-i18n="Диагностика">Диагностика</h2>
+          <div class="button-row">
+            <button id="recover-profile">
+              <i data-lucide="archive-restore"></i><span data-i18n="Восстановить локальные награды">Восстановить локальные награды</span>
+            </button>
+            <button id="folder">
+              <i data-lucide="folder-open"></i><span data-i18n="Папка данных">Папка данных</span>
+            </button>
+          </div>
+        </div>
+        <div id="profile-path" class="field-note"></div>
+        <div id="logs"></div>
+        <section class="editor-section">
+          <div class="section-head">
+            <h2 data-i18n="Обновления">Обновления</h2>
+            <button id="check-updates">
+              <i data-lucide="refresh-cw"></i><span data-i18n="Проверить">Проверить</span>
+            </button>
+          </div>
+          <label class="check"
+            ><input id="auto-updates" type="checkbox" /><span data-i18n="Проверять при запуске">Проверять при запуске</span></label
+          >
+          <div id="update-status" class="field-note" role="status"></div>
+          <button id="show-update" hidden>
+            <i data-lucide="download"></i><span data-i18n="Открыть обновление">Открыть обновление</span>
+          </button>
+        </section>
+      </section>
+    </main>
+    <div id="toast" role="status" hidden></div>
+    <dialog id="groups-dialog" aria-labelledby="groups-title">
+      <div class="section-head">
+        <h2 id="groups-title" data-i18n="Группы наград">Группы наград</h2>
+        <form method="dialog">
+          <button title="Закрыть" data-i18n-title="Закрыть" aria-label="Закрыть" data-i18n-aria-label="Закрыть">
+            <i data-lucide="x"></i>
+          </button>
+        </form>
+      </div>
+      <div class="group-picker">
+        <select id="group-select" aria-label="Группа" data-i18n-aria-label="Группа"></select
+        ><button id="group-new" title="Новая группа" data-i18n-title="Новая группа" aria-label="Новая группа" data-i18n-aria-label="Новая группа">
+          <i data-lucide="folder-plus"></i>
+        </button>
+      </div>
+      <div class="group-fields">
+        <label><span data-i18n="Название">Название</span><input id="group-name" maxlength="60" /></label
+        ><label
+          ><span data-i18n="Цвет">Цвет</span><input id="group-color" type="color" value="#239d89"
+        /></label>
+      </div>
+      <div id="group-members" class="group-members"></div>
+      <div id="group-result" class="field-note" role="status"></div>
+      <div class="button-row">
+        <button id="group-save" class="primary">
+          <i data-lucide="palette"></i><span data-i18n="Сохранить и применить цвет">Сохранить и применить цвет</span></button
+        ><button
+          id="group-delete"
+          class="danger"
+          title="Удалить группу, сохранив награды"
+          data-i18n-title="Удалить группу, сохранив награды"
+          aria-label="Удалить группу"
+          data-i18n-aria-label="Удалить группу"
+        >
+          <i data-lucide="trash-2"></i>
+        </button>
+      </div>
+    </dialog>
+    <dialog
+      id="confirm-dialog"
+      aria-labelledby="confirm-title"
+      aria-describedby="confirm-message"
+    >
+      <h2 id="confirm-title" data-i18n="Подтверждение">Подтверждение</h2>
+      <div id="confirm-message" class="update-notes"></div>
+      <form method="dialog" class="button-row">
+        <button value="cancel" autofocus data-i18n="Отмена">Отмена</button>
+        <button value="accept" class="primary" data-i18n="Продолжить">Продолжить</button>
+      </form>
+    </dialog>
+    <dialog id="history-dialog" aria-labelledby="history-title">
+      <div class="section-head">
+        <h2 id="history-title" data-i18n="История награды">История награды</h2>
+        <form method="dialog">
+          <button aria-label="Закрыть" data-i18n-aria-label="Закрыть" title="Закрыть" data-i18n-title="Закрыть">
+            <i data-lucide="x"></i>
+          </button>
+        </form>
+      </div>
+      <div id="history-list"></div>
+    </dialog>
+    <dialog id="update-dialog" aria-labelledby="update-title">
+      <h2 id="update-title" data-i18n="Обновление Reward Desk">Обновление Reward Desk</h2>
+      <div id="update-notes" class="update-notes"></div>
+      <div id="update-message" class="field-note" role="status"></div>
+      <progress id="update-progress" max="100" value="0" hidden></progress>
+      <div class="button-row">
+        <button id="update-later" data-i18n="Позже">Позже</button
+        ><button id="install-update" class="primary">
+          <i data-lucide="download"></i><span data-i18n="Обновить и перезапустить">Обновить и перезапустить</span>
+        </button>
+      </div>
+    </dialog>
+    <script src="../node_modules/lucide/dist/umd/lucide.js"></script>
+    <script src="../overlay/geometry.js"></script>
+    <script src="../overlay/caption.js"></script>
+    <script src="locales-editor.js"></script>
+    <script src="locales-shell.js"></script>
+    <script src="help.js"></script>
+    <script src="app.js"></script>
+    <script src="channel.js"></script>
+    <script src="groups.js"></script>
+    <script src="obs.js"></script>
+    <script src="updates.js"></script>
+    <script src="appearance.js"></script>
+  </body>
+</html>
