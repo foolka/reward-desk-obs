@@ -6,6 +6,12 @@ Public Windows x64 release for OBS Studio 32+. The OBS plugin and standalone app
 
 ![Local browser editor](screenshots/obs-browser-editor.png)
 
+## Hearing Rewards In Your Headphones
+
+Enable **Control audio via OBS** in the Browser source properties. Then open Audio Mixer → Advanced Audio Properties and set the Reward Desk OBS source's Audio Monitoring to **Monitor and Output**. In Settings → Audio → Advanced → Monitoring Device, select your headphones (or the headset for VR).
+
+Without monitoring, the source can play to viewers while remaining silent in your headphones; this is not a playback failure. **Monitor Only (mute output)** disables direct output to the stream/recording, so it is not the setting for both you and viewers. Check the source's mixer level, volume and selected output tracks using Test in the editor. If you hear doubled audio, check whether Desktop Audio is capturing the monitored sound again. This applies to sound rewards and video audio alike.
+
 ## Isolation
 
 | | App | OBS plugin |

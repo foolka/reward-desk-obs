@@ -28,9 +28,20 @@
 2. Вне эфира и записи закройте OBS через «Выход». Установщик не завершает процессы принудительно.
 3. Запустите установщик и подтвердите системный запрос администратора. Плагин устанавливается в `%PROGRAMDATA%\obs-studio\plugins\reward-desk-obs`. Обычная установка OBS 32+ обязательна; Portable OBS не поддерживается.
 4. Откройте OBS, затем «Док-панели → Reward Desk» и «Открыть редактор». Войдите через Twitch. Создавать регистрацию разработчика не требуется.
-5. Кнопкой «Источник» скопируйте URL в источник «Браузер» OBS, размер **1920×1080**. Включите управление аудио через OBS и настройте нужные дорожки.
+5. Кнопкой «Источник» скопируйте URL в источник «Браузер» OBS, размер **1920×1080**. Включите управление аудио через OBS и настройте нужные дорожки. Чтобы слышать награды самому, обязательно включите прослушивание по инструкции ниже.
 
 Установщик не подписан сертификатом издателя: Windows может показать SmartScreen. Проверяйте источник и SHA-256, не отключайте защиту Windows. Системные DLL OBS не заменяются.
+
+## Важно: как слышать награды самому
+
+**Одной галочки «Управлять аудио через OBS» недостаточно для прослушивания.** Без мониторинга звук может идти зрителям, но не в ваши наушники. Это не означает, что плагин не работает. Настройка нужна и для звуков, и для звука в видео.
+
+1. В микшере OBS нажмите правой кнопкой мыши → «Расширенные свойства звука».
+2. В строке браузерного источника Reward Desk OBS найдите «Мониторинг аудио» и выберите **«Прослушивание включено» (Monitor and Output)**. Так звук идёт вам и на выход OBS для стрима/записи, согласно выбранным дорожкам.
+3. В «Настройки → Аудио → Расширенные → Устройство прослушивания» выберите свои наушники. При переключении на VR проверьте устройство шлема.
+4. Нажмите «Тест» в редакторе наград, проверьте движение уровня источника в микшере, его громкость и звук в наушниках.
+
+**Не выбирайте «Только мониторинг (заглушить вывод)», если награду должны слышать зрители:** этот режим отключает прямой вывод источника в стрим/запись. Если появился двойной звук, проверьте, не захватывает ли «Звук рабочего стола» прослушивание повторно.
 
 ## Самостоятельный Проект
 
@@ -86,3 +97,5 @@ npm run test:obs
 ## English
 
 Independent OBS Studio 32+ plugin for Twitch sound/video rewards. Includes its own native dock, runtime, browser editor, source, installer and updater. No standalone Reward Desk installation or sibling source checkout is needed. Choose the app OR plugin. Upgrade over the existing plugin without deleting `%APPDATA%\RewardDeskOBS`; all data, media and source keys remain in place. Future releases come from `foolka/reward-desk-obs` only. Windows x64, EN/UK/RU, light/dark themes. Unsigned installer: verify its SHA-256.
+
+**To hear rewards yourself:** enable Control audio via OBS in the Browser source, then open Audio Mixer → Advanced Audio Properties and set that source to **Monitor and Output**. Select your headphones under Settings → Audio → Advanced → Monitoring Device. Without monitoring, viewers may hear the reward while you hear nothing. Monitor Only (mute output) disables the source's direct stream/recording output. Test both audio rewards and video sound after setup.
