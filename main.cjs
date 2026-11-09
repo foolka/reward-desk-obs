@@ -13,7 +13,7 @@ const {
 } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
-const { Store, importMedia } = require("./core/store.cjs");
+const { Store, importMedia, importKind } = require("./core/store.cjs");
 const { preferences, savePreferences } = require("./core/preferences.cjs");
 const { createI18n } = require("./ui/i18n.js");
 const nativeI18n = createI18n();
@@ -309,11 +309,11 @@ app
         return next;
       },
       stash: (value) => store.stashDraft(value),
-      upload: async (id, file) => {
+      upload: async (id, file, purpose) => {
         const next = serial.then(() => {
           const reward = store.reward(id);
           if (!reward) throw Error("Награда не найдена");
-          const media = importMedia(store, file, reward.kind);
+          const media = importMedia(store, file, importKind(reward, purpose));
           changed();
           return media;
         });
@@ -563,16 +563,17 @@ async function execute(command, arg, context = {}) {
     case "import": {
       const r = store.reward(arg.id);
       if (!r) throw Error("Выберите награду");
+      const kind = importKind(r, arg.purpose);
       let files = arg.paths;
       if (!files) {
         const pick = await dialog.showOpenDialog(win, {
           properties: ["openFile", "multiSelections"],
           filters: [
             {
-              name: tr(r.kind === "video" ? "Видео" : "Аудио"),
+              name: tr(kind === "video" ? "Видео" : "Аудио"),
               extensions:
-                r.kind === "video"
-                  ? ["mp4", "webm"]
+                kind === "video"
+                  ? ["mp4", "webm", "png", "jpg", "jpeg", "webp", "gif"]
                   : ["mp3", "wav", "ogg", "m4a", "flac"],
             },
           ],
@@ -582,7 +583,7 @@ async function execute(command, arg, context = {}) {
       if (!Array.isArray(files) || files.length > 200)
         throw Error("Не больше 200 файлов");
       const imported = [];
-      for (const file of files) imported.push(importMedia(store, file, r.kind));
+      for (const file of files) imported.push(importMedia(store, file, kind));
       changed();
       return imported;
     }

@@ -36,7 +36,7 @@ function readRecovery(root) {
     for (const m of media) {
       if (
         !/^[a-z0-9-]{1,100}$/i.test(m.id) ||
-        !["audio", "video"].includes(m.kind) ||
+        !["audio", "video", "image"].includes(m.kind) ||
         TYPES[m.ext]?.[0] !== m.kind
       )
         throw Error("Некорректный путь медиа в копии");
@@ -70,8 +70,10 @@ async function restoreMissing(store, source) {
   if (!rewards.length) return { added: 0, files: 0 };
   const ids = new Set(
     rewards.flatMap((r) => [
-      ...r.items.map((i) => i.id),
-      ...(source.meta["editor:" + r.id]?.value?.items || []).map((i) => i.id),
+      ...r.items.flatMap((i) => [i.id, i.presentation?.soundId].filter(Boolean)),
+      ...(source.meta["editor:" + r.id]?.value?.items || []).flatMap((i) =>
+        [i.id, i.presentation?.soundId].filter(Boolean),
+      ),
     ]),
   );
   const media = [];

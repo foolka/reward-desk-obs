@@ -1,7 +1,7 @@
 {
   "name": "reward-desk-obs",
   "productName": "Reward Desk OBS",
-  "version": "0.10.0",
+  "version": "0.11.1",
   "private": true,
   "description": "Independent OBS Studio plugin for Twitch sound and video rewards",
   "author": "FermionaPlay",
@@ -14,6 +14,9 @@
     "start": "electron .",
     "test": "node --test tests/*.test.cjs",
     "test:ui": "node tools/test-obs-editor.cjs",
+    "test:fullscreen": "node tools/test-fullscreen.cjs",
+    "test:fullscreen-upgrade": "node tools/test-fullscreen-upgrade.cjs",
+    "test:transparency": "node tools/test-transparency.cjs",
     "build": "node tools/build-native.cjs && node tools/build.cjs",
     "installer": "node tools/build-installer.cjs",
     "build:native": "node tools/build-native.cjs",
@@ -27,8 +30,8 @@
     "lucide": "0.468.0"
   },
   "devDependencies": {
-    "electron": "42.11.8",
     "@electron/packager": "20.3.0",
+    "electron": "42.11.18",
     "playwright": "1.58.2"
   }
 }

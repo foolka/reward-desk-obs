@@ -143,8 +143,10 @@ class Control {
     if (req.method === "POST" && url.pathname === "/api/upload") {
       if (this.uploads) throw error("Загрузка уже выполняется", 409);
       const name = url.searchParams.get("name") || "";
+      const purpose = url.searchParams.get("purpose") || "item";
+      if (!["item", "sound"].includes(purpose)) throw error("Недопустимое назначение файла");
       if (name !== path.basename(name) || /[\\/:\0]/.test(name) || name.length > 200 ||
-        !/\.(mp4|webm|mp3|wav|ogg|m4a|flac)$/i.test(name)) throw error("Недопустимый файл");
+        !/\.(mp4|webm|mp3|wav|ogg|m4a|flac|png|jpe?g|webp|gif)$/i.test(name)) throw error("Недопустимый файл");
       const directory = fs.mkdtempSync(path.join(os.tmpdir(), "reward-upload-"));
       const file = path.join(directory, name);
       this.uploads++;
@@ -155,7 +157,7 @@ class Control {
           cb(size > 512 * 1024 * 1024 ? error("Файл больше 512 МБ", 413) : null, chunk);
         } }), fs.createWriteStream(file, { flags: "wx" }));
         this.authorizeEditor(id);
-        return this.reply(res, 200, await this.upload(url.searchParams.get("id"), file));
+        return this.reply(res, 200, await this.upload(url.searchParams.get("id"), file, purpose));
       } finally {
         this.uploads--;
         if (fs.existsSync(file)) fs.unlinkSync(file);
@@ -169,7 +171,7 @@ class Control {
     let file;
     if (route === "/editor/") file = "ui/index.html";
     else if (/^\/editor\/[a-z0-9-]+\.(js|css)$/.test(route)) file = "ui/" + route.slice(8);
-    else if (["/overlay/caption.css", "/overlay/caption.js", "/overlay/geometry.js",
+    else if (["/overlay/caption.css", "/overlay/caption.js", "/overlay/geometry.js", "/overlay/presentation.js", "/overlay/playback.js", "/overlay/playback.css",
       "/node_modules/lucide/dist/umd/lucide.js"].includes(route)) file = route.slice(1);
     if (!file || !fs.existsSync(path.join(base, file))) return false;
     res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: http://127.0.0.1:*; media-src 'self' http://127.0.0.1:*; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");

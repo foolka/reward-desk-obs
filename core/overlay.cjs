@@ -17,6 +17,9 @@ class Overlay {
       "geometry.js",
       "caption.js",
       "caption.css",
+      "presentation.js",
+      "playback.js",
+      "playback.css",
     ])
       this.build.update(
         fs.readFileSync(path.join(__dirname, "../overlay", file)),
@@ -94,6 +97,9 @@ class Overlay {
         "/geometry.js",
         "/caption.js",
         "/caption.css",
+        "/presentation.js",
+        "/playback.js",
+        "/playback.css",
       ].includes(leaf)
     ) {
       const file = leaf === "/" ? "index.html" : leaf.slice(1);
@@ -287,7 +293,7 @@ class Overlay {
     }
     const playing = this.engine.playing();
     if (playing) {
-      if (Date.now() - playing.startedAt > 10 * 60000) {
+      if (Date.now() - playing.startedAt > 10 * 60000 + 10000) {
         this.stopPlayback();
         this.engine.interrupt(playing.id, "Превышено 10 минут воспроизведения");
       }
@@ -306,6 +312,10 @@ class Overlay {
     this.send(c, "play", {
       id: job.id,
       kind: job.kind,
+      mediaKind: job.item.kind,
+      presentation: job.item.presentation,
+      soundUrl: job.video?.fullscreen && job.item.presentation?.soundId
+        ? this.base + "/media/" + job.item.presentation.soundId : "",
       volume: job.item.volume,
       url: this.base + "/media/" + job.item.id,
       video: job.video,

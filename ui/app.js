@@ -212,6 +212,7 @@ function bindSettings(root, getValue, changed) {
   );
 }
 function renderEditor() {
+  RewardFullscreenEditor.stop();
   previewObserver?.disconnect();
   if (!draft) {
     $("#editor").innerHTML =
@@ -229,6 +230,7 @@ function renderEditor() {
   $("#editor").innerHTML =
     `<div class="editor-head"><div class="title"><h2>${esc(draft.title)}</h2><small>${esc(draft.remoteId ? tr("Связана с Twitch") : tr("Локальный черновик"))}${draft.sync === "pending" ? " · " + esc(tr("изменения не отправлены")) : ""}</small></div><div class="button-row"><button id="test-reward">${icon("play")}${esc(tr("Тест"))}</button><button id="remove-reward" class="danger" title="${esc(tr("Удалить награду"))}">${icon("trash-2")}</button></div></div>
   ${settingsMarkup(draft)}
+  ${video ? RewardFullscreenEditor.markup() : ""}
   <section class="editor-section chat-section"><div class="section-head"><h3>${esc(tr("Запуск через чат"))}</h3><span id="chat-status" class="muted"></span></div>
   <label class="check"><input id="chat-enabled" type="checkbox" ${chat.enabled ? "checked" : ""}>${esc(tr("Разрешить команду чата"))}</label>
   <div class="chat-fields"><label>${esc(tr("Команда"))}<input id="chat-command" maxlength="33" placeholder="${esc(tr("!video"))}" value="${esc(chat.command)}" spellcheck="false"></label><label>${esc(tr("Пауза, сек."))}<input id="chat-cooldown" type="number" min="0" max="3600" value="${chat.cooldown}"></label><label class="wide">${esc(tr("Разрешённые Twitch-ники"))}<textarea id="chat-users" rows="2" maxlength="5400" placeholder="${esc(tr("nickname1, nickname2"))}" spellcheck="false">${esc(Array.isArray(chat.users) ? chat.users.join(", ") : chat.users)}</textarea></label></div>
@@ -304,6 +306,7 @@ function renderEditor() {
   if (video) bindVideo();
   renderMedia();
   icons();
+  if (video) RewardFullscreenEditor.bind();
 }
 function renderChatStatus() {
   if (!$("#chat-status") || !draft) return;
@@ -428,6 +431,7 @@ async function save() {
 }
 async function addFiles(paths) {
   const added = await command("import", { id: selected, paths });
+  rememberMedia(added);
   for (const m of added)
     draft.items.push({
       id: m.id,
@@ -438,6 +442,11 @@ async function addFiles(paths) {
   markDirty();
   renderMedia();
   updatePlacement();
+}
+// Import replies can arrive before the next state notification.
+function rememberMedia(added) {
+  const ids = new Set(added.map((media) => media.id));
+  state.media = [...state.media.filter((media) => !ids.has(media.id)), ...added];
 }
 function renderMedia() {
   $("#media-mode").textContent =
@@ -457,10 +466,27 @@ function renderMedia() {
     .join("");
   $$(".media-row").forEach((row) => {
     const i = draft.items.find((i) => i.id === row.dataset.item);
+    if (draft.kind === "video" && draft.video.fullscreen) {
+      const button = document.createElement("button");
+      button.dataset.fullscreenEdit = "";
+      button.title = tr("Настройки полного экрана");
+      button.setAttribute("aria-label", button.title);
+      button.innerHTML = icon("sliders-horizontal");
+      row.querySelector(".media-file").append(button);
+      act(button, () => {
+        RewardFullscreenEditor.stop();
+        previewItemId = i.id;
+        refreshCaptionItems(); RewardFullscreenEditor.refresh(); updatePlacement();
+        $("#fullscreen-item").scrollIntoView({ block: "nearest" });
+        $("#fullscreen-item").focus();
+      });
+    }
     if (draft.kind === "video")
       act(row.querySelector("[data-caption-edit]"), () => {
         previewItemId = i.id;
         refreshCaptionItems();
+        RewardFullscreenEditor.stop();
+        RewardFullscreenEditor.refresh();
         updatePlacement();
         $("#caption-text").focus();
       });
@@ -492,6 +518,7 @@ function renderMedia() {
   percentages();
   refreshCaptionItems();
   icons();
+  RewardFullscreenEditor.refresh();
 }
 function previewItem() {
   const item =
@@ -533,9 +560,12 @@ function percentages() {
   });
 }
 function bindVideo() {
+  $("#drop-zone .formats").textContent = tr("MP4 · WebM · PNG · JPG · WebP · GIF");
   $("#caption-item").addEventListener("change", (event) => {
     previewItemId = event.target.value;
     refreshCaptionItems();
+    RewardFullscreenEditor.stop();
+    RewardFullscreenEditor.refresh();
     updatePlacement();
   });
   $("#caption-text").addEventListener("input", (event) => {
@@ -629,7 +659,7 @@ function bindVideo() {
   const el = $("#placement");
   let drag;
   el.addEventListener("pointerdown", (e) => {
-    if (draft.video.mode === "random") return;
+    if (draft.video.fullscreen || draft.video.mode === "random") return;
     drag = { x: e.clientX, y: e.clientY, px: draft.video.x, py: draft.video.y };
     el.setPointerCapture(e.pointerId);
   });
@@ -661,13 +691,16 @@ function updatePlacement(syncCoordinates = false) {
   const item = previewItem();
   const first = item?.id || "";
   if (p.dataset.media !== first) {
-    p.querySelector("video")?.remove();
+    p.querySelector(".placement-media")?.remove();
     p.dataset.media = first;
     if (first) {
-      const video = document.createElement("video");
+      const image = state.media.find((m) => m.id === first)?.kind === "image";
+      const video = document.createElement(image ? "img" : "video");
+      video.className = "placement-media";
+      if (image) video.alt = "";
       video.muted = true;
       video.preload = "metadata";
-      video.onloadedmetadata = () => {
+      video[image ? "onload" : "onloadedmetadata"] = () => {
         if (!p.isConnected) return;
         updatePlacement();
         if (Number.isFinite(video.duration) && video.duration > 0)
@@ -677,24 +710,30 @@ function updatePlacement(syncCoordinates = false) {
       p.prepend(video);
     }
   }
-  const video = p.querySelector("video");
+  const video = p.querySelector(".placement-media");
+  const settings = RewardPresentation.forItem(item);
+  if (video) {
+    video.classList.toggle("placement-media--fullscreen", !!v.fullscreen);
+    video.style.objectFit = v.fullscreen ? settings.fit : "contain";
+  }
   const ratio =
-    video?.videoWidth && video.videoHeight
+    video?.naturalWidth && video.naturalHeight ? video.naturalWidth / video.naturalHeight : video?.videoWidth && video.videoHeight
       ? video.videoWidth / video.videoHeight
       : v.width / v.height;
-  const frame = RewardGeometry.layout({ ...v, mode: "fixed", angle: 0 }, ratio);
+  const frame = v.fullscreen ? { x: 0, y: 0, width: 1920, height: 1080, border: 0 }
+    : RewardGeometry.layout({ ...v, mode: "fixed", angle: 0 }, ratio);
   Object.assign(p.style, {
     left: frame.x / 19.2 + "%",
     top: frame.y / 10.8 + "%",
     width: frame.width / 19.2 + "%",
     height: frame.height / 10.8 + "%",
     border: `${frame.border * scale}px ${v.borderStyle} ${v.color}`,
-    borderRadius: v.radius * scale + "px",
+    borderRadius: (v.fullscreen ? 0 : v.radius * scale) + "px",
   });
   RewardCaption.renderAll(
     p,
     RewardCaption.forItem(draft.video, item),
-    video?.duration,
+    video?.tagName === "IMG" ? settings.imageSeconds : video?.duration,
     scale,
   );
   $("#coordinates").textContent =

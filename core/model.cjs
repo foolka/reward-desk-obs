@@ -1,4 +1,5 @@
 const { randomInt, randomUUID } = require("node:crypto");
+const presentation = require("../overlay/presentation.js");
 const {
   fonts: captionFonts,
   anchors: captionAnchors,
@@ -50,6 +51,7 @@ function initialReward(kind = "audio") {
     chatClientId: "",
     items: [],
     video: {
+      fullscreen: false,
       mode: "fixed",
       x: 660,
       y: 370,
@@ -122,6 +124,7 @@ function normalizeReward(input, prior) {
   )
     throw Error("Неверный стиль видео");
   r.video = {
+    fullscreen: v.fullscreen ?? prior?.video?.fullscreen ?? false,
     mode: v.mode,
     x: number(v.x, 0, 1920, "X"),
     y: number(v.y, 0, 1080, "Y"),
@@ -139,6 +142,8 @@ function normalizeReward(input, prior) {
       v.duration ?? prior?.video?.duration ?? durationDefaults,
     ),
   };
+  if (typeof r.video.fullscreen !== "boolean")
+    throw Error("Неверный переключатель полного экрана");
   r.video.x = Math.min(r.video.x, 1920 - r.video.width);
   r.video.y = Math.min(r.video.y, 1080 - r.video.height);
   if (!Array.isArray(input.items) || input.items.length > 200)
@@ -154,6 +159,9 @@ function normalizeReward(input, prior) {
       weight: integer(item.weight, 0, 10000, "Вес"),
       ...(input.kind === "video"
         ? {
+            presentation: normalizePresentation(
+              item.presentation ?? prior?.items.find((old) => old.id === item.id)?.presentation,
+            ),
             captionText: text(
               item.captionText ??
                 prior?.items.find((old) => old.id === item.id)?.captionText ??
@@ -178,6 +186,28 @@ function normalizeReward(input, prior) {
     ])
       r[key] = prior[key];
   return r;
+}
+// Additive defaults preserve old items and validate each independent effect.
+function normalizePresentation(value) {
+  if (value !== undefined && (!value || typeof value !== "object" || Array.isArray(value)))
+    throw Error("Неверные настройки полного экрана");
+  const p = { ...presentation.defaults, ...value };
+  if (!presentation.animations.includes(p.enter) || !presentation.animations.includes(p.exit) ||
+      !presentation.directions.includes(p.enterFrom) || !presentation.directions.includes(p.exitTo) ||
+      !["cover", "contain"].includes(p.fit))
+    throw Error("Выберите анимацию, направление и заполнение экрана");
+  return {
+    imageSeconds: number(p.imageSeconds, 0.1, 600, "Показ картинки, сек."),
+    fit: p.fit,
+    soundId: text(p.soundId, 80, "Звуковой файл"),
+    soundVolume: number(p.soundVolume, 0, 100, "Громкость отдельного звука"),
+    enter: p.enter,
+    enterMs: integer(p.enterMs, 0, 5000, "Появление, мс"),
+    enterFrom: p.enterFrom,
+    exit: p.exit,
+    exitMs: integer(p.exitMs, 0, 5000, "Исчезновение, мс"),
+    exitTo: p.exitTo,
+  };
 }
 function normalizeCaption(value) {
   if (!value || !captionFonts.includes(value.font))
@@ -287,6 +317,7 @@ module.exports = {
   normalizeChat,
   normalizeCaption,
   normalizeDuration,
+  normalizePresentation,
   normalizeSettings,
   fromTwitch,
   twitchFields,

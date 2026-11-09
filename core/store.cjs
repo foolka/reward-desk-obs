@@ -140,8 +140,10 @@ class Store {
     const r = normalizeReward(value, this.reward(value.id));
     for (const item of r.items) {
       const m = this.media(item.id);
-      if (!m || m.kind !== r.kind)
+      if (!m || (m.kind !== r.kind && !(r.kind === "video" && m.kind === "image")))
         throw Error("Файл не подходит для типа награды");
+      if (item.presentation?.soundId && this.media(item.presentation.soundId)?.kind !== "audio")
+        throw Error("Для отдельного звука выберите аудиофайл");
     }
     r.createdAt ||= Date.now();
     r.updatedAt = Date.now();
@@ -219,19 +221,25 @@ const TYPES = {
   ".flac": ["audio", "audio/flac"],
   ".mp4": ["video", "video/mp4"],
   ".webm": ["video", "video/webm"],
+  ".png": ["image", "image/png"],
+  ".jpg": ["image", "image/jpeg"],
+  ".jpeg": ["image", "image/jpeg"],
+  ".webp": ["image", "image/webp"],
+  ".gif": ["image", "image/gif"],
 };
 function importMedia(store, file, kind) {
   const ext = path.extname(file).toLowerCase(),
     type = TYPES[ext],
     stat = fs.statSync(file);
-  if (!type || type[0] !== kind) throw Error("Неподдерживаемый формат файла");
+  if (!type || (type[0] !== kind && !(kind === "video" && type[0] === "image")))
+    throw Error("Неподдерживаемый формат файла");
   if (!stat.isFile() || !stat.size || stat.size > 512 * 1024 * 1024)
     throw Error("Файл должен быть от 1 байта до 512 МБ");
   const m = {
     id: randomUUID(),
     name: path.basename(file),
     ext,
-    kind,
+    kind: type[0],
     mime: type[1],
     size: stat.size,
   };
@@ -241,4 +249,11 @@ function importMedia(store, file, kind) {
   fs.renameSync(temp, dest);
   return store.putMedia(m);
 }
-module.exports = { Store, importMedia, TYPES };
+// Extra audio belongs to a visual item and never becomes a roulette entry itself.
+function importKind(reward, purpose = "item") {
+  if (!reward) throw Error("Награда не найдена");
+  if (purpose === "item") return reward.kind;
+  if (purpose === "sound" && reward.kind === "video") return "audio";
+  throw Error("Недопустимое назначение файла");
+}
+module.exports = { Store, importMedia, importKind, TYPES };

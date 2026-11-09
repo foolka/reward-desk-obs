@@ -8,7 +8,7 @@ const ui = path.join(__dirname, "../ui");
 
 function catalog() {
   const i18n = createI18n();
-  for (const name of ["locales-editor.js", "locales-shell.js"])
+  for (const name of ["locales-editor.js", "locales-shell.js", "locales-fullscreen.js"])
     vm.runInNewContext(fs.readFileSync(path.join(ui, name), "utf8"), { RewardI18n: i18n });
   return i18n;
 }
@@ -35,7 +35,7 @@ test("annotated shell markup has translations and never targets form values", ()
 });
 test("literal translation calls in UI modules are covered", () => {
   const i18n = catalog();
-  for (const file of ["app.js", "channel.js", "obs.js", "groups.js", "updates.js", "help.js"])
+  for (const file of ["app.js", "channel.js", "obs.js", "groups.js", "updates.js", "help.js", "fullscreen.js"])
     for (const [, literal] of fs.readFileSync(path.join(ui, file), "utf8").matchAll(/\btr\(\s*("(?:\\.|[^"\\])*")/g)) {
       const source = JSON.parse(literal);
       for (const locale of ["en", "uk"])

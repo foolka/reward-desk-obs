@@ -5,7 +5,6 @@ const loadedBuild = document.querySelector(
 let client = "",
   current = null,
   source,
-  watchdog,
   reconnectTimer,
   lastSignal = Date.now(),
   retryDelay = 1000;
@@ -14,6 +13,7 @@ function resize() {
   stage.style.transform = `scale(${s})`;
   stage.style.left = `${(innerWidth - 1920 * s) / 2}px`;
   stage.style.top = `${(innerHeight - 1080 * s) / 2}px`;
+  if (current?.frame.classList.contains("fullscreen-frame")) current.layout();
 }
 addEventListener("resize", resize);
 resize();
@@ -30,14 +30,8 @@ async function ack(type, id = "") {
   } catch {}
 }
 function stop() {
-  clearTimeout(watchdog);
-  if (current) {
-    current.el.pause();
-    current.el.removeAttribute("src");
-    current.el.load();
-    current.frame.remove();
-    current = null;
-  }
+  current?.stop();
+  current = null;
 }
 function connect() {
   clearTimeout(reconnectTimer);
@@ -77,61 +71,10 @@ setInterval(() => {
 }, 2000);
 function play(job) {
   stop();
-  const el = document.createElement(job.kind === "video" ? "video" : "audio");
-  const frame = job.kind === "video" ? document.createElement("div") : el;
-  if (frame !== el) {
-    frame.className = "clip-frame";
-    el.className = "clip";
-    frame.append(el);
-  }
-  current = { id: job.id, el, frame };
-  el.volume = job.volume / 100;
-  el.preload = "auto";
-  el.playsInline = true;
-  let settled = false;
-  const finish = (type) => {
-    if (settled || current?.id !== job.id) return;
-    settled = true;
-    clearTimeout(watchdog);
-    frame.classList.add("leaving");
-    setTimeout(() => {
-      if (current?.id === job.id) {
-        stop();
-        void ack(type, job.id);
-      }
-    }, 180);
-  };
-  el.onended = () => finish("ended");
-  el.onerror = () => finish("error");
-  el.onloadedmetadata = () => {
-    if (current?.id !== job.id || settled) return;
-    if (!Number.isFinite(el.duration) || el.duration > 600) {
-      finish("error");
-      return;
-    }
-    if (job.kind === "video") {
-      const v = job.video,
-        p = RewardGeometry.layout(v, el.videoWidth / el.videoHeight || 16 / 9);
-      Object.assign(frame.style, {
-        left: p.x + "px",
-        top: p.y + "px",
-        width: p.width + "px",
-        height: p.height + "px",
-        transform: `rotate(${p.angle}deg)`,
-        border: `${p.border}px ${v.borderStyle} ${v.color}`,
-        borderRadius: v.radius + "px",
-      });
-      RewardCaption.renderAll(frame, v, el.duration);
-    }
-    clearTimeout(watchdog);
-    watchdog = setTimeout(
-      () => finish("error"),
-      Math.min(600000, el.duration * 1000 + 15000),
-    );
-    el.play().catch(() => finish("error"));
-  };
-  watchdog = setTimeout(() => finish("error"), 20000);
-  el.src = job.url;
-  stage.append(frame);
+  current = RewardPlayback.mount(job.video?.fullscreen && job.kind === "video" ? document.body : stage, job, (type) => {
+    if (current?.id !== job.id) return;
+    current = null;
+    void ack(type, job.id);
+  });
 }
 connect();

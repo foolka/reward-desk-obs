@@ -44,11 +44,12 @@
     if (!response.ok) throw Error(result.error || "Reward Desk недоступен");
     return result;
   }
-  function chooseFiles() {
+  function chooseFiles(purpose) {
     return new Promise((resolve) => {
       const input = document.createElement("input");
       input.type = "file"; input.multiple = true;
-      input.accept = ".mp4,.webm,.mp3,.wav,.ogg,.m4a,.flac";
+      input.accept = purpose === "sound" ? ".mp3,.wav,.ogg,.m4a,.flac" : ".mp4,.webm,.mp3,.wav,.ogg,.m4a,.flac,.png,.jpg,.jpeg,.webp,.gif";
+      if (purpose === "sound") input.multiple = false;
       input.addEventListener("change", () => resolve([...input.files]), { once: true });
       input.addEventListener("cancel", () => resolve([]), { once: true });
       input.click();
@@ -75,12 +76,12 @@
       if (command === "recover-profile") window.flushLocalDraft();
       if (["minimize", "maximize", "quit", "tray"].includes(command)) return;
       if (command === "import") {
-        const files = arg.paths || await chooseFiles();
+        const files = arg.paths || await chooseFiles(arg.purpose);
         if (files.length > 200) throw Error("Не больше 200 файлов");
         const added = [];
         for (const file of files) {
           if (!(file instanceof File) || file.size > 512 * 1024 * 1024) throw Error("Файл больше 512 МБ");
-          added.push(await request(`/api/upload?id=${encodeURIComponent(arg.id)}&name=${encodeURIComponent(file.name)}`, undefined,
+          added.push(await request(`/api/upload?id=${encodeURIComponent(arg.id)}&name=${encodeURIComponent(file.name)}&purpose=${encodeURIComponent(arg.purpose || "item")}`, undefined,
             { method: "POST", body: file, headers }));
         }
         state = await request("/api/state"); listener?.(state);
