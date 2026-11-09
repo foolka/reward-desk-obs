@@ -42,7 +42,8 @@ async function open() {
 }
 (async () => {
   await start();
-  browser = await chromium.launch({ channel: "chrome", headless: true });
+  browser = await chromium.launch({ channel: "chrome", headless: true,
+    args: ["--autoplay-policy=no-user-gesture-required", "--mute-audio"] });
   assert.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isVisible()), false);
   await open();
   assert.equal(await page.locator(".window-titlebar").isVisible(), false);
@@ -76,7 +77,7 @@ async function open() {
   assert.equal((await dock()).queued, 1);
   assert.equal((await dock()).paused, true);
   const overlayUrl = (await dock()).overlay.url;
-  const player = await browser.newPage(); await player.goto(overlayUrl);
+  const player = await browser.newPage({ userAgent: "obs-browser/32.0" }); await player.goto(overlayUrl);
   await dock("pause", false);
   for (let i = 0; i < 100 && !(await dock()).playing; i++) await new Promise((r) => setTimeout(r, 100));
   assert.ok((await dock()).playing, "queued reward starts in the browser source");

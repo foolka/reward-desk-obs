@@ -22,7 +22,10 @@ class Store {
     if (!this.meta("overlayToken"))
       this.setMeta("overlayToken", randomBytes(32).toString("hex"));
     for (const j of this.jobs())
-      if (j.state === "playing")
+      if (j.video?.fullscreen && ["queued", "playing", "attention"].includes(j.state))
+        this.putJob({ ...j, state: j.refundable ? "settling" : "failed", desired: "CANCELED",
+          detail: "Полноэкранные пугалки перенесены в Dudos Lite" });
+      else if (j.state === "playing")
         this.putJob({
           ...j,
           state: "attention",

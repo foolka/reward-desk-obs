@@ -93,6 +93,40 @@ test("private/missing releases and network failure never claim up to date", asyn
   };
   assert.equal((await u.check()).status, "error");
 });
+
+test("local builds are distinguished from the latest published version", async () => {
+  const updater = new Updates({ current: "0.12.0", get: async () => new Response(JSON.stringify([release])) });
+  const state = await updater.check();
+  assert.equal(state.status, "local");
+  assert.equal(state.publishedVersion, "0.6.0");
+  assert.equal(state.release, undefined);
+});
+
+test("automatic checks retry temporary failures and stop when disabled", async () => {
+  let timer, cleared = 0;
+  const updater = new Updates({ current: "0.5.0", get: async () => { throw Error("offline"); },
+    setTimer: (fn, ms) => (timer = { fn, ms }), clearTimer: () => { cleared++; } });
+  updater.setAuto(true); assert.equal(timer.ms, 3500);
+  await timer.fn(); assert.equal(timer.ms, 300000);
+  updater.get = async () => new Response(JSON.stringify([release]));
+  await timer.fn(); assert.equal(updater.state.status, "available"); assert.equal(timer.ms, 21600000);
+  updater.setAuto(false); assert.equal(updater.auto, false);
+  updater.dispose(); assert.ok(cleared >= 3);
+});
+test("toggling automatic checks during a request cannot create duplicate timers", async () => {
+  let finish;
+  const timers = [];
+  const updater = new Updates({ current: "0.5.0", get: () => new Promise(resolve => { finish = resolve; }),
+    setTimer: (fn, ms) => { const timer = { fn, ms }; timers.push(timer); return timer; }, clearTimer: () => {} });
+  updater.setAuto(true);
+  const pending = timers[0].fn();
+  updater.setAuto(false); updater.setAuto(true);
+  finish(new Response(JSON.stringify([release])));
+  await pending;
+  assert.equal(timers.length, 2);
+  updater.dispose();
+});
+
 test("verified download is complete and exact; mismatched hash cannot become installer", async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "reward-update-"));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));

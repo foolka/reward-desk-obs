@@ -127,16 +127,38 @@ function checksumText(text, name) {
   return match[1].toLowerCase();
 }
 class Updates {
-  constructor({ current, changed = () => {}, get = request }) {
+  constructor({ current, changed = () => {}, get = request, setTimer = setTimeout, clearTimer = clearTimeout }) {
     this.current = current;
     this.changed = changed;
     this.get = get;
+    this.setTimer = setTimer;
+    this.clearTimer = clearTimer;
+    this.auto = false;
+    this.autoGeneration = 0;
     this.state = { status: "idle", message: "Проверка ещё не выполнена" };
   }
   set(value) {
     this.state = value;
     this.changed();
   }
+  // Retry after temporary network failures and check long-running sessions too.
+  setAuto(enabled) {
+    this.clearTimer(this.timer);
+    this.autoGeneration++;
+    this.auto = enabled === true;
+    if (this.auto) this.schedule(3500);
+  }
+  schedule(ms) {
+    const generation = this.autoGeneration;
+    this.timer = this.setTimer(async () => {
+      try { await this.check(); }
+      finally {
+        if (this.auto && generation === this.autoGeneration) this.schedule(this.state.status === "error" ? 300000 : 21600000);
+      }
+    }, ms);
+    this.timer?.unref?.();
+  }
+  dispose() { this.auto = false; this.autoGeneration++; this.clearTimer(this.timer); }
   async check() {
     if (["checking", "downloading", "installing"].includes(this.state.status))
       return this.state;
@@ -168,7 +190,10 @@ class Updates {
                 message: `Доступна версия ${info.version}`,
                 release: info,
               }
-            : { status: "current", message: "Установлена актуальная версия" },
+            : newer(this.current, release.tag_name)
+              ? { status: "local", publishedVersion: version(release.tag_name).join("."),
+                  message: "Локальная версия новее опубликованной в GitHub" }
+              : { status: "current", message: "Установлена актуальная версия" },
         );
       }
     } catch (error) {

@@ -30,10 +30,11 @@ class Engine {
       cycle,
       detail = "";
     const key = cycleKey(reward, event);
-    const projected = itemId
+    const projected = itemId || reward.video?.fullscreen
       ? null
       : projectQueue(this.store, key, reward, this.rng);
     try {
+      if (reward.video?.fullscreen) throw Error("Полноэкранные пугалки перенесены в Dudos Lite");
       if (itemId) selected = reward.items.find((i) => i.id === itemId);
       else if (reward.allowRepeats === true) {
         selected = choose(reward.items, this.rng);

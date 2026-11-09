@@ -20,10 +20,10 @@ async function until(check) {
 }
 
 (async () => {
-	const file = path.join(profile, "image.png");
-	execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=0x198b67:s=200x200", "-frames:v", "1", file], { windowsHide: true });
+	const file = path.join(profile, "video.webm");
+	execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-f", "lavfi", "-i", "color=c=0x198b67:s=200x200:r=10", "-t", "0.6", "-c:v", "libvpx-vp9", file], { windowsHide: true });
 	const media = importMedia(store, file, "video");
-	const reward = initialReward("video"); reward.video.fullscreen = true;
+	const reward = initialReward("video");
 	reward.items = [{ id: media.id, volume: 0, weight: 1, presentation: { imageSeconds: 0.3, enterMs: 0, exitMs: 0 } }];
 	const saved = store.saveReward(reward);
 	overlay = new Overlay({ store, engine, account: () => "" });
@@ -46,7 +46,7 @@ async function until(check) {
 	store.setMeta("paused", false);
 	await until(() => store.job(job.id).state === "done");
 	assert.equal(navigations, 2, "already open page reloads exactly once");
-	assert.equal(plays, 1, "queued fullscreen image plays exactly once");
+	assert.equal(plays, 1, "queued regular video plays exactly once");
 	assert.equal(await page.locator(".clip-frame").count(), 0);
 	assert.equal(overlay.url(), url);
 	assert.equal(store.jobs().length, 1);

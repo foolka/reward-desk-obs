@@ -156,6 +156,7 @@ void RewardDock::accept(const QJsonObject &value) {
     const auto updates = value["updates"].toObject();
     const auto status = updates["status"].toString();
     update->setText(status == "available" ? text("Доступно обновление плагина. Закройте OBS и запустите его установщик.", "Доступне оновлення плагіна. Закрийте OBS і запустіть інсталятор.", "Plugin update available. Close OBS and run its installer.") :
+        status == "local" ? text("Локальная версия новее публичного выпуска", "Локальна версія новіша за публічний випуск", "Local version is newer than the public release") :
         status == "checking" ? text("Проверяем обновления…", "Перевіряємо оновлення…", "Checking updates…") :
         status == "current" ? text("Установлена актуальная версия", "Установлено актуальну версію", "You are up to date") :
         status == "unavailable" ? text("Публичный выпуск пока недоступен", "Публічний випуск поки недоступний", "Public release is not available yet") :

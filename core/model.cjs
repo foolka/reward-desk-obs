@@ -144,6 +144,8 @@ function normalizeReward(input, prior) {
   };
   if (typeof r.video.fullscreen !== "boolean")
     throw Error("Неверный переключатель полного экрана");
+  if (r.video.fullscreen && !prior?.video?.fullscreen)
+    throw Error("Полноэкранные пугалки перенесены в Dudos Lite");
   r.video.x = Math.min(r.video.x, 1920 - r.video.width);
   r.video.y = Math.min(r.video.y, 1080 - r.video.height);
   if (!Array.isArray(input.items) || input.items.length > 200)

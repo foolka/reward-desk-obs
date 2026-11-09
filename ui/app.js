@@ -221,6 +221,7 @@ function renderEditor() {
     return;
   }
   const video = draft.kind === "video";
+  if (RewardFullscreenEditor.retired()) return;
   const chat = draft.chat || {
     enabled: false,
     command: "",

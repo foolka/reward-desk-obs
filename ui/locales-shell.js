@@ -150,6 +150,7 @@
     ["Проверяем GitHub…", "Checking GitHub…", "Перевіряємо GitHub…"],
     ["Нет доступного публичного выпуска. Приватные выпуски требуют отдельного доступа.", "No public release is available. Private releases require separate access.", "Немає доступного публічного випуску. Приватні випуски потребують окремого доступу."],
     ["Установлена актуальная версия", "You are up to date", "Установлено актуальну версію"],
+    ["Локальная версия новее опубликованной в GitHub", "This local version is newer than the published GitHub release", "Локальна версія новіша за опублікований випуск GitHub"],
     ["Проверка не выполнена: {error}", "Check failed: {error}", "Перевірку не виконано: {error}"],
     ["Загрузка установщика…", "Downloading installer…", "Завантаження інсталятора…"],
     ["Подготовка резервной копии и установки…", "Preparing backup and installation…", "Підготовка резервної копії та встановлення…"],

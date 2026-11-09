@@ -338,10 +338,7 @@ app
     if (!test) {
       auth.resume();
       void twitch.connect();
-      if (store.meta("checkUpdates", true))
-        setTimeout(() => {
-          if (!closing) void updates.check();
-        }, 3500).unref();
+      updates.setAuto(store.meta("checkUpdates", true));
     }
     setInterval(changed, 3000).unref();
   })
@@ -400,6 +397,7 @@ async function execute(command, arg, context = {}) {
       break;
     case "auto-updates":
       store.setMeta("checkUpdates", !!arg);
+      if (!test) updates.setAuto(!!arg);
       break;
     case "install-update": {
       if (obsPlugin) throw Error("Обновление плагина устанавливается отдельным установщиком после закрытия OBS.");
@@ -573,7 +571,7 @@ async function execute(command, arg, context = {}) {
               name: tr(kind === "video" ? "Видео" : "Аудио"),
               extensions:
                 kind === "video"
-                  ? ["mp4", "webm", "png", "jpg", "jpeg", "webp", "gif"]
+                  ? ["mp4", "webm"]
                   : ["mp3", "wav", "ogg", "m4a", "flac"],
             },
           ],
@@ -746,6 +744,7 @@ app.on("before-quit", (event) => {
   cleanup();
 });
 function cleanup() {
+  updates?.dispose();
   control?.close();
   obsRecovery?.close();
   twitch?.close();

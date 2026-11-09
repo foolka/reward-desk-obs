@@ -1,5 +1,7 @@
 (() => {
 	const strings = [
+		["Полноэкранные пугалки перенесены в Dudos Lite", "Fullscreen scares moved to Dudos Lite", "Повноекранні лякалки перенесено до Dudos Lite"],
+		["Эта награда больше не запускается в Reward Desk. Файлы и настройки сохранены. В Dudos Desk нажмите «Перенести из Reward Desk»: элементы попадут в обычную рулетку, новая награда Twitch не создаётся.", "This reward no longer runs in Reward Desk. Files and settings are preserved. In Dudos Desk, click Import from Reward Desk to add its items to the normal roulette without creating a Twitch reward.", "Ця нагорода більше не запускається в Reward Desk. Файли й налаштування збережено. У Dudos Desk натисніть «Перенести з Reward Desk»: елементи потраплять до звичайної рулетки без створення нагороди Twitch."],
 		["На весь экран", "Fullscreen", "На весь екран"],
 		["Для больших пугалок: видео или картинка заполняет источник OBS, без рамки и наклона. Растяните источник на весь холст OBS и разместите выше игры.", "For large jump scares: a video or image fills the OBS source without a border or tilt. Fit the source to the OBS canvas and place it above the game.", "Для великих лякалок: відео або картинка заповнює джерело OBS без рамки й нахилу. Розтягніть джерело на весь холст OBS і розмістіть над грою."],
 		["Элемент рулетки", "Roulette item", "Елемент рулетки"],
